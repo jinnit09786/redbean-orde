@@ -49,7 +49,7 @@
           </select>
           <div class="form-text text-danger" id="timeNote"></div>
         </div>
-        <button type="button" class="btn btn-primary w-100 btn-lg" onclick="submitOrder()">送出訂單</button>
+        <button type="button" class="btn btn-primary w-100 btn-lg" onclick="">送出訂單</button>
       </form>
     </div>
 
@@ -156,8 +156,19 @@
       })
       .then(res => res.json())
       .then(result => {
-        alert(result.message);
-        liff.closeWindow();
+        // 隱藏轉圈圈，顯示成功畫面
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("orderForm").style.display = "none";
+        
+        // 顯示自訂的成功訊息
+        document.body.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+            <div style="font-size:60px;">🥣</div>
+            <h2 style="color:#a71e32; margin-top:20px;">訂購成功！</h2>
+            <p style="font-size:18px; color:#555;">${result.message}</p>
+            <p style="color:#aaa; margin-top:30px;">可以關閉此視窗了</p>
+          </div>
+        `;
       })
       .catch(err => {
         alert("發生錯誤：" + err);
