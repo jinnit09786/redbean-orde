@@ -6,66 +6,215 @@
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { padding: 20px; font-family: sans-serif; background-color: #f8f9fa; }
-    .card { margin-top: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .btn-primary { background-color: #a71e32; border-color: #8c192a; }
-    #loading { display: none; text-align: center; margin-top: 20px; }
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Helvetica Neue', sans-serif; 
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 頂部標題區 */
+    .header {
+      background-color: #a71e32;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: bold;
+      margin: 0;
+    }
+    .header p {
+      font-size: 15px;
+      margin: 6px 0 0;
+      opacity: 0.85;
+    }
+
+    /* 剩餘數量 */
+    .stock-bar {
+      background: #fff3cd;
+      border-bottom: 2px solid #ffc107;
+      padding: 12px 20px;
+      text-align: center;
+      font-size: 17px;
+      font-weight: bold;
+      color: #856404;
+    }
+
+    /* 商品卡片 */
+    .product-card {
+      background: white;
+      margin: 16px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* 圖片區 */
+    .product-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background-color: #f0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+    }
+    .product-image img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    /* 商品資訊 */
+    .product-info {
+      padding: 16px;
+    }
+    .product-name {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+    }
+    .product-price {
+      font-size: 20px;
+      color: #a71e32;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .product-desc {
+      font-size: 14px;
+      color: #888;
+      margin-top: 6px;
+    }
+
+    /* 表單區 */
+    .order-form {
+      background: white;
+      margin: 0 16px 16px;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .form-label {
+      font-size: 16px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 8px;
+    }
+    .form-select {
+      font-size: 17px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1.5px solid #ddd;
+      height: auto;
+    }
+    .form-select:focus {
+      border-color: #a71e32;
+      box-shadow: 0 0 0 3px rgba(167,30,50,0.15);
+    }
+
+    /* 送出按鈕 */
+    .btn-order {
+      background-color: #a71e32;
+      border: none;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 16px;
+      border-radius: 12px;
+      width: 100%;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+    .btn-order:active {
+      background-color: #8c192a;
+    }
+
+    /* loading */
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    #loading p {
+      font-size: 18px;
+      color: #666;
+      margin-top: 16px;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h3 class="text-center mb-4">🥣 紅豆湯線上點餐</h3>
-    
-    <div class="alert alert-info text-center">
-      今日剩餘：<strong id="remainQty">讀取中...</strong> 碗
+
+  <!-- 頂部標題 -->
+  <div class="header">
+    <h1>🥣 紅豆湯線上點餐</h1>
+    <p>新鮮現煮・每日限量</p>
+  </div>
+
+  <!-- 剩餘數量 -->
+  <div class="stock-bar">
+    今日剩餘：<span id="remainQty">讀取中...</span> 碗
+  </div>
+
+  <div id="mainContent">
+    <!-- 商品卡片 -->
+    <div class="product-card">
+      <!-- 圖片區：把下面的 emoji 換成 <img src="你的圖片網址"> 即可 -->
+      <div class="product-image">🥣</div>
+      <div class="product-info">
+        <div class="product-name">招牌紅豆湯</div>
+        <div class="product-price">NT$ 50 / 碗</div>
+        <div class="product-desc">精選大粒紅豆，每日新鮮熬煮，冷熱皆宜</div>
+      </div>
     </div>
 
-    <div class="card p-4">
-      <form id="orderForm">
-        <div class="mb-3">
-          <label class="form-label">數量 (每碗 $50)</label>
-          <select class="form-select" id="quantity">
-            <option value="1">1 碗</option>
-            <option value="2">2 碗</option>
-            <option value="3">3 碗</option>
-            <option value="4">4 碗</option>
-            <option value="5">5 碗</option>
-            <option value="6">6 碗</option>
-            <option value="7">7 碗</option>
-            <option value="8">8 碗</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">冷熱選項</label>
-          <select class="form-select" id="temperature">
-            <option value="熱">熱</option>
-            <option value="冰">冰</option>
-            <option value="去冰">去冰</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">取餐時間</label>
-          <select class="form-select" id="pickupTime">
-            <option value="" disabled selected>請選擇時間</option>
-          </select>
-          <div class="form-text text-danger" id="timeNote"></div>
-        </div>
-        <button type="button" class="btn btn-primary w-100 btn-lg" onclick="submitOrder()">送出訂單</button>
-      </form>
-    </div>
+    <!-- 訂單表單 -->
+    <div class="order-form" id="orderForm">
+      <div class="mb-3">
+        <label class="form-label">📦 數量</label>
+        <select class="form-select" id="quantity">
+          <option value="1">1 碗</option>
+          <option value="2">2 碗</option>
+          <option value="3">3 碗</option>
+          <option value="4">4 碗</option>
+          <option value="5">5 碗</option>
+          <option value="6">6 碗</option>
+          <option value="7">7 碗</option>
+          <option value="8">8 碗</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">🌡️ 冷熱選項</label>
+        <select class="form-select" id="temperature">
+          <option value="熱">熱</option>
+          <option value="冰">冰</option>
+          <option value="去冰">去冰</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="form-label">⏰ 取餐時間</label>
+        <select class="form-select" id="pickupTime">
+          <option value="" disabled selected>請選擇時間</option>
+        </select>
+        <div class="form-text text-danger mt-1" id="timeNote"></div>
+      </div>
 
-    <div id="loading">
-      <div class="spinner-border text-danger" role="status"></div>
-      <p>正在訂購中，請稍候...</p>
+      <button class="btn-order" onclick="submitOrder()">送出訂單</button>
     </div>
   </div>
 
+  <!-- loading -->
+  <div id="loading">
+    <div class="spinner-border text-danger" style="width:50px;height:50px;" role="status"></div>
+    <p>正在訂購中，請稍候...</p>
+  </div>
+
   <script>
-    // =============================================
-    // !! 這兩個換成你自己的 !!
     const LIFF_ID = "2009193127-tcK3Q6uD";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxW0nFumExkb4rtue9nsucqtZIZDtXfYJliYEpjEKMNgvdMu6Em8S1xGKETYZxJHhDYKQ/exec";
-    // =============================================
 
     window.onload = function() {
       initializeLiff();
@@ -73,7 +222,6 @@
       generateTimeSlots();
     };
 
-    // 1. 初始化 LIFF
     function initializeLiff() {
       liff.init({ liffId: LIFF_ID })
         .then(() => {
@@ -86,22 +234,20 @@
         });
     }
 
-    // 2. 讀取庫存 (改用 fetch 呼叫 GAS)
     function loadInventory() {
       fetch(GAS_URL + "?action=getInventory")
         .then(res => res.json())
         .then(data => {
           document.getElementById("remainQty").innerText = data.qty;
           if (data.qty <= 0) {
-            disableForm("已售完");
+            disableForm("今日已售完");
           }
         })
-        .catch(err => {
+        .catch(() => {
           document.getElementById("remainQty").innerText = "讀取失敗";
         });
     }
 
-    // 3. 產生時間選單
     function generateTimeSlots() {
       var select = document.getElementById("pickupTime");
       var now = new Date();
@@ -129,7 +275,6 @@
       }
     }
 
-    // 4. 送出訂單
     function submitOrder() {
       var qty = document.getElementById("quantity").value;
       var time = document.getElementById("pickupTime").value;
@@ -137,7 +282,7 @@
 
       if (!time) { alert("請選擇取餐時間！"); return; }
 
-      document.getElementById("orderForm").style.display = "none";
+      document.getElementById("mainContent").style.display = "none";
       document.getElementById("loading").style.display = "block";
 
       liff.getProfile().then(profile => {
@@ -157,23 +302,20 @@
       })
       .then(res => res.json())
       .then(result => {
-        // 隱藏轉圈圈，顯示成功畫面
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("orderForm").style.display = "none";
-        
-        // 顯示自訂的成功訊息
         document.body.innerHTML = `
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
-            <div style="font-size:60px;">🥣</div>
-            <h2 style="color:#a71e32; margin-top:20px;">訂購成功！</h2>
-            <p style="font-size:18px; color:#555;">${result.message}</p>
-            <p style="color:#aaa; margin-top:30px;">可以關閉此視窗了</p>
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; background:#f5f5f5; padding:30px; text-align:center;">
+            <div style="font-size:80px;">🥣</div>
+            <h2 style="color:#a71e32; margin-top:20px; font-size:28px;">訂購成功！</h2>
+            <div style="background:white; border-radius:16px; padding:20px 30px; margin-top:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1); font-size:18px; color:#555; line-height:1.8;">
+              ${result.message}
+            </div>
+            <p style="color:#aaa; margin-top:30px; font-size:15px;">可以關閉此視窗了</p>
           </div>
         `;
       })
       .catch(err => {
         alert("發生錯誤：" + err);
-        document.getElementById("orderForm").style.display = "block";
+        document.getElementById("mainContent").style.display = "block";
         document.getElementById("loading").style.display = "none";
       });
     }
@@ -181,7 +323,7 @@
     function disableForm(msg) {
       document.getElementById("orderForm").style.display = "none";
       document.getElementById("loading").style.display = "block";
-      document.getElementById("loading").innerHTML = "<h3>" + msg + "</h3>";
+      document.getElementById("loading").innerHTML = `<h2 style="color:#a71e32;">${msg}</h2>`;
     }
   </script>
 </body>
