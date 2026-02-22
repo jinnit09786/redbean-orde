@@ -7,88 +7,53 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { 
-      font-family: 'Helvetica Neue', sans-serif; 
+    body {
+      font-family: 'Helvetica Neue', sans-serif;
       background-color: #f5f5f5;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
     }
-
-    /* 頂部標題區 */
     .header {
       background-color: #a71e32;
       color: white;
       padding: 20px;
       text-align: center;
     }
-    .header h1 {
-      font-size: 26px;
-      font-weight: bold;
-      margin: 0;
-    }
-    .header p {
-      font-size: 15px;
-      margin: 6px 0 0;
-      opacity: 0.85;
-    }
+    .header h1 { font-size: 26px; font-weight: bold; margin: 0; }
+    .header p { font-size: 15px; margin: 6px 0 0; opacity: 0.85; }
 
-    /* 剩餘數量 */
-    .stock-bar {
-      background: #fff3cd;
-      border-bottom: 2px solid #ffc107;
-      padding: 12px 20px;
-      text-align: center;
-      font-size: 17px;
-      font-weight: bold;
-      color: #856404;
-    }
-
-    /* 商品卡片 */
-    .product-card {
+    /* 品項卡 */
+    .product-list { padding: 12px 16px 0; }
+    .product-item {
       background: white;
-      margin: 16px;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    /* 圖片區 */
-    .product-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      background-color: #f0e0e0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 60px;
-    }
-    .product-image img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    }
-
-    /* 商品資訊 */
-    .product-info {
+      border-radius: 14px;
       padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .product-name {
-      font-size: 22px;
-      font-weight: bold;
-      color: #333;
-    }
-    .product-price {
-      font-size: 20px;
+    .product-item.soldout { opacity: 0.45; pointer-events: none; }
+    .product-left h3 { font-size: 20px; font-weight: bold; color: #333; margin: 0; }
+    .product-left .price { font-size: 18px; color: #a71e32; font-weight: bold; margin-top: 2px; }
+    .product-left .stock { font-size: 13px; color: #999; margin-top: 2px; }
+
+    /* 數量控制 */
+    .qty-control { display: flex; align-items: center; gap: 12px; }
+    .qty-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 2px solid #a71e32;
+      background: white;
       color: #a71e32;
-      font-weight: bold;
-      margin-top: 4px;
+      font-size: 22px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      user-select: none;
     }
-    .product-desc {
-      font-size: 14px;
-      color: #888;
-      margin-top: 6px;
-    }
+    .qty-btn:active { background: #a71e32; color: white; }
+    .qty-btn.disabled { border-color: #ddd; color: #ddd; pointer-events: none; }
+    .qty-value { font-size: 22px; font-weight: bold; min-width: 28px; text-align: center; }
 
     /* 表單區 */
     .order-form {
@@ -98,105 +63,85 @@
       padding: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .form-label {
-      font-size: 16px;
-      font-weight: bold;
-      color: #444;
-      margin-bottom: 8px;
+    .form-label { font-size: 16px; font-weight: bold; color: #444; margin-bottom: 8px; }
+    .form-select, .form-control {
+      font-size: 17px; padding: 12px;
+      border-radius: 10px; border: 1.5px solid #ddd; height: auto;
     }
-    .form-select {
-      font-size: 17px;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1.5px solid #ddd;
-      height: auto;
-    }
-    .form-select:focus {
+    .form-select:focus, .form-control:focus {
       border-color: #a71e32;
       box-shadow: 0 0 0 3px rgba(167,30,50,0.15);
+    }
+    .note-counter { font-size: 12px; color: #aaa; text-align: right; margin-top: 4px; }
+
+    /* 小計列 */
+    .subtotal-bar {
+      background: #fff3cd;
+      border-top: 2px solid #ffc107;
+      border-bottom: 2px solid #ffc107;
+      padding: 14px 20px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #856404;
+      position: sticky;
+      bottom: 70px;
+      z-index: 10;
     }
 
     /* 送出按鈕 */
     .btn-order {
-      background-color: #a71e32;
-      border: none;
-      color: white;
-      font-size: 20px;
-      font-weight: bold;
-      padding: 16px;
-      border-radius: 12px;
-      width: 100%;
-      margin-top: 8px;
-      letter-spacing: 1px;
+      background-color: #a71e32; border: none; color: white;
+      font-size: 20px; font-weight: bold;
+      padding: 16px; border-radius: 12px; width: 100%;
+      margin-top: 8px; letter-spacing: 1px;
     }
-    .btn-order:active {
-      background-color: #8c192a;
-    }
+    .btn-order:disabled { background-color: #ccc; }
+    .btn-order:active { background-color: #8c192a; }
 
-    /* loading */
     #loading {
-      display: none;
-      text-align: center;
-      padding: 60px 20px;
+      display: none; text-align: center; padding: 60px 20px;
     }
-    #loading p {
-      font-size: 18px;
-      color: #666;
-      margin-top: 16px;
-    }
+    #loading p { font-size: 18px; color: #666; margin-top: 16px; }
+    .init-loading { text-align: center; padding: 60px 20px; color: #999; font-size: 17px; }
   </style>
 </head>
 <body>
 
-  <!-- 頂部標題 -->
   <div class="header">
-    <h1>🥣 紅豆湯線上點餐</h1>
+    <h1>🥣 線上點餐</h1>
     <p>新鮮現煮・每日限量</p>
   </div>
 
-  <!-- 剩餘數量 -->
-  <div class="stock-bar">
-    今日剩餘：<span id="remainQty">讀取中...</span> 碗
-  </div>
-
   <div id="mainContent">
+    <div class="init-loading" id="initLoading">載入品項中...</div>
 
-    <!-- 訂單表單 -->
-    <div class="order-form" id="orderForm">
+    <!-- 品項列表（動態生成） -->
+    <div class="product-list" id="productList" style="display:none;"></div>
+
+    <!-- 小計 -->
+    <div class="subtotal-bar" id="subtotalBar" style="display:none;">
+      小計：<span id="subtotalText">$0</span>
+    </div>
+
+    <!-- 其他選項 -->
+    <div class="order-form" id="orderForm" style="display:none;">
       <div class="mb-3">
-        <label class="form-label">📦 數量</label>
-        <select class="form-select" id="quantity">
-          <option value="1">1 碗</option>
-          <option value="2">2 碗</option>
-          <option value="3">3 碗</option>
-          <option value="4">4 碗</option>
-          <option value="5">5 碗</option>
-          <option value="6">6 碗</option>
-          <option value="7">7 碗</option>
-          <option value="8">8 碗</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">🌡️ 冷熱選項</label>
-        <select class="form-select" id="temperature">
-          <option value="熱">熱</option>
-          <option value="冰">冰</option>
-          <option value="去冰">去冰</option>
-        </select>
-      </div>
-      <div class="mb-4">
         <label class="form-label">⏰ 取餐時間</label>
         <select class="form-select" id="pickupTime">
           <option value="" disabled selected>請選擇時間</option>
         </select>
         <div class="form-text text-danger mt-1" id="timeNote"></div>
       </div>
-
-      <button class="btn-order" onclick="submitOrder()">送出訂單</button>
+      <div class="mb-4">
+        <label class="form-label">📝 備註</label>
+        <input type="text" class="form-control" id="note" maxlength="100" placeholder="例：不要太甜、加湯圓…">
+        <div class="note-counter"><span id="noteCount">0</span>/100</div>
+      </div>
+      <button class="btn-order" id="submitBtn" onclick="submitOrder()" disabled>送出訂單</button>
     </div>
   </div>
 
-  <!-- loading -->
   <div id="loading">
     <div class="spinner-border text-danger" style="width:50px;height:50px;" role="status"></div>
     <p>正在訂購中，請稍候...</p>
@@ -206,51 +151,100 @@
     const LIFF_ID = "2009193127-tcK3Q6uD";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxW0nFumExkb4rtue9nsucqtZIZDtXfYJliYEpjEKMNgvdMu6Em8S1xGKETYZxJHhDYKQ/exec";
 
+    var products = []; // [{name, price, remaining, row}]
+    var cart = {};     // { "紅豆湯": 2, "綠豆湯": 1 }
+
     window.onload = function() {
       initializeLiff();
-      loadInventory();
+      loadProducts();
       generateTimeSlots();
+
+      document.getElementById("note").addEventListener("input", function() {
+        document.getElementById("noteCount").innerText = this.value.length;
+      });
     };
 
     function initializeLiff() {
       liff.init({ liffId: LIFF_ID })
         .then(() => {
-          if (!liff.isLoggedIn()) {
-            liff.login();
-          }
+          if (!liff.isLoggedIn()) liff.login();
         })
-        .catch((err) => {
-          alert("LIFF 初始化失敗: " + err);
+        .catch((err) => alert("LIFF 初始化失敗: " + err));
+    }
+
+    function loadProducts() {
+      fetch(GAS_URL + "?action=getProducts")
+        .then(res => res.json())
+        .then(data => {
+          products = data.products;
+          renderProducts();
+          document.getElementById("initLoading").style.display = "none";
+          document.getElementById("productList").style.display = "block";
+          document.getElementById("subtotalBar").style.display = "block";
+          document.getElementById("orderForm").style.display = "block";
+        })
+        .catch(() => {
+          document.getElementById("initLoading").innerText = "載入失敗，請重新整理";
         });
     }
 
-    function loadInventory() {
-      fetch(GAS_URL + "?action=getInventory")
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("remainQty").innerText = data.qty;
-          if (data.qty <= 0) {
-            disableForm("今日已售完");
-          }
-        })
-        .catch(() => {
-          document.getElementById("remainQty").innerText = "讀取失敗";
-        });
+    function renderProducts() {
+      var html = "";
+      products.forEach(function(p) {
+        var qty = cart[p.name] || 0;
+        var soldout = p.remaining <= 0;
+        html += `
+          <div class="product-item ${soldout ? 'soldout' : ''}" id="item-${p.name}">
+            <div class="product-left">
+              <h3>${p.name}</h3>
+              <div class="price">$${p.price}</div>
+              <div class="stock">剩餘 ${p.remaining} 份</div>
+            </div>
+            <div class="qty-control">
+              <div class="qty-btn ${qty <= 0 ? 'disabled' : ''}" onclick="changeQty('${p.name}', -1)">−</div>
+              <div class="qty-value" id="qty-${p.name}">${qty}</div>
+              <div class="qty-btn ${qty >= p.remaining ? 'disabled' : ''}" onclick="changeQty('${p.name}', 1)">+</div>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById("productList").innerHTML = html;
+    }
+
+    function changeQty(name, delta) {
+      var product = products.find(p => p.name === name);
+      if (!product) return;
+      var current = cart[name] || 0;
+      var next = current + delta;
+      if (next < 0) next = 0;
+      if (next > product.remaining) next = product.remaining;
+      cart[name] = next;
+      if (next === 0) delete cart[name];
+      renderProducts();
+      updateSubtotal();
+    }
+
+    function updateSubtotal() {
+      var total = 0;
+      var hasItems = false;
+      products.forEach(function(p) {
+        if (cart[p.name]) {
+          total += cart[p.name] * p.price;
+          hasItems = true;
+        }
+      });
+      document.getElementById("subtotalText").innerText = "$" + total;
+      document.getElementById("submitBtn").disabled = !hasItems;
     }
 
     function generateTimeSlots() {
       var select = document.getElementById("pickupTime");
       var now = new Date();
-      var startHour = 10;
-      var endHour = 20;
-
-      for (var h = startHour; h < endHour; h++) {
+      for (var h = 10; h < 20; h++) {
         [0, 30].forEach(function(m) {
           var slotTime = new Date();
           slotTime.setHours(h, m, 0, 0);
-          var diffMins = (slotTime - now) / 1000 / 60;
-
-          if (diffMins > 5) {
+          if ((slotTime - now) / 1000 / 60 > 5) {
             var timeStr = (h < 10 ? "0"+h : h) + ":" + (m === 0 ? "00" : "30");
             var option = document.createElement("option");
             option.value = timeStr;
@@ -259,18 +253,25 @@
           }
         });
       }
-
       if (select.options.length === 1) {
         document.getElementById("timeNote").innerText = "今日已無可預約時段";
       }
     }
 
     function submitOrder() {
-      var qty = document.getElementById("quantity").value;
       var time = document.getElementById("pickupTime").value;
-      var temp = document.getElementById("temperature").value;
+      var note = document.getElementById("note").value;
 
       if (!time) { alert("請選擇取餐時間！"); return; }
+
+      // 組建 items 陣列
+      var items = [];
+      products.forEach(function(p) {
+        if (cart[p.name] && cart[p.name] > 0) {
+          items.push({ name: p.name, qty: cart[p.name], price: p.price });
+        }
+      });
+      if (items.length === 0) { alert("請至少選擇一項商品！"); return; }
 
       document.getElementById("mainContent").style.display = "none";
       document.getElementById("loading").style.display = "block";
@@ -280,9 +281,9 @@
           action: "processOrder",
           userId: profile.userId,
           userName: profile.displayName,
-          quantity: qty,
           pickupTime: time,
-          temperature: temp
+          note: note,
+          items: items
         };
 
         return fetch(GAS_URL, {
@@ -292,12 +293,22 @@
       })
       .then(res => res.json())
       .then(result => {
+        if (result.status === "error") {
+          alert(result.message);
+          document.getElementById("mainContent").style.display = "block";
+          document.getElementById("loading").style.display = "none";
+          return;
+        }
+        var itemsSummary = items.map(i => i.name + "×" + i.qty).join("、");
         document.body.innerHTML = `
           <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; background:#f5f5f5; padding:30px; text-align:center;">
             <div style="font-size:80px;">🥣</div>
             <h2 style="color:#a71e32; margin-top:20px; font-size:28px;">訂購成功！</h2>
-            <div style="background:white; border-radius:16px; padding:20px 30px; margin-top:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1); font-size:18px; color:#555; line-height:1.8;">
-              ${result.message}
+            <div style="background:white; border-radius:16px; padding:20px 30px; margin-top:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1); font-size:18px; color:#555; line-height:2;">
+              <div>📦 ${itemsSummary}</div>
+              <div>💰 共 $${result.totalPrice}</div>
+              <div>⏰ 取餐時間：${time}</div>
+              ${note ? '<div>📝 ' + note + '</div>' : ''}
             </div>
             <p style="color:#aaa; margin-top:30px; font-size:15px;">可以關閉此視窗了</p>
           </div>
@@ -308,12 +319,6 @@
         document.getElementById("mainContent").style.display = "block";
         document.getElementById("loading").style.display = "none";
       });
-    }
-
-    function disableForm(msg) {
-      document.getElementById("orderForm").style.display = "none";
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("loading").innerHTML = `<h2 style="color:#a71e32;">${msg}</h2>`;
     }
   </script>
 </body>
