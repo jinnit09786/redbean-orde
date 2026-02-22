@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+    .header { background: #a71e32; color: white; padding: 20px; text-align: center; }
+    .header h1 { font-size: 22px; margin: 0; }
+    .order-card { background: white; margin: 16px; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 17px; line-height: 2; }
+    .no-order { text-align: center; padding: 60px 20px; color: #aaa; font-size: 18px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🥣 我的今日訂單</h1>
+  </div>
+
+  <div id="content">
+    <div class="no-order">讀取中...</div>
+  </div>
+
+  <script>
+    const LIFF_ID = "2009193127-tcK3Q6uD";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxW0nFumExkb4rtue9nsucqtZIZDtXfYJliYEpjEKMNgvdMu6Em8S1xGKETYZxJHhDYKQ/exec";
+
+    window.onload = function() {
+      liff.init({ liffId: LIFF_ID })
+        .then(() => {
+          if (!liff.isLoggedIn()) {
+            liff.login();
+          } else {
+            loadMyOrders();
+          }
+        });
+    };
+
+    function loadMyOrders() {
+      liff.getProfile().then(profile => {
+        return fetch(GAS_URL + "?action=getMyOrder&userId=" + profile.userId);
+      })
+      .then(res => res.json())
+      .then(data => {
+        var content = document.getElementById("content");
+        if (data.orders.length === 0) {
+          content.innerHTML = `<div class="no-order">今日尚無訂單</div>`;
+          return;
+        }
+        var html = "";
+        data.orders.forEach(function(o) {
+          html += `
+            <div class="order-card">
+              <div>⏰ 取餐時間：<strong>${o.pickupTime}</strong></div>
+              <div>📦 數量：<strong>${o.quantity} 碗</strong></div>
+              <div>🌡️ 溫度：<strong>${o.temperature}</strong></div>
+              <div style="font-size:13px; color:#aaa;">單號：${o.orderId}</div>
+            </div>
+          `;
+        });
+        content.innerHTML = html;
+      })
+      .catch(() => {
+        document.getElementById("content").innerHTML = `<div class="no-order">讀取失敗，請稍後再試</div>`;
+      });
+    }
+  </script>
+</body>
+</html>
