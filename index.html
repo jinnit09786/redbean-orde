@@ -225,6 +225,32 @@
       color: #999;
       font-size: 17px;
     }
+
+    .closed-overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 80vh;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .closed-overlay .icon {
+      font-size: 80px;
+    }
+
+    .closed-overlay h2 {
+      color: #a71e32;
+      margin-top: 20px;
+      font-size: 28px;
+    }
+
+    .closed-overlay p {
+      color: #888;
+      font-size: 18px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
@@ -269,6 +295,12 @@
     <p>正在訂購中，請稍候...</p>
   </div>
 
+  <div class="closed-overlay" id="closedOverlay">
+    <div class="icon">🚫</div>
+    <h2>今日公休</h2>
+    <p id="closedReason">店家目前休息中</p>
+  </div>
+
   <script>
     const LIFF_ID = "2009193127-tcK3Q6uD";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxW0nFumExkb4rtue9nsucqtZIZDtXfYJliYEpjEKMNgvdMu6Em8S1xGKETYZxJHhDYKQ/exec";
@@ -278,13 +310,33 @@
 
     window.onload = function () {
       initializeLiff();
-      loadProducts();
-      generateTimeSlots();
+      checkStoreStatus();
 
       document.getElementById("note").addEventListener("input", function () {
         document.getElementById("noteCount").innerText = this.value.length;
       });
     };
+
+    function checkStoreStatus() {
+      fetch(GAS_URL + "?action=getStoreStatus")
+        .then(res => res.json())
+        .then(data => {
+          if (!data.isOpen) {
+            document.getElementById("initLoading").style.display = "none";
+            document.getElementById("mainContent").style.display = "none";
+            document.getElementById("closedReason").innerText = data.reason || "店家目前休息中";
+            document.getElementById("closedOverlay").style.display = "flex";
+          } else {
+            loadProducts();
+            generateTimeSlots(data.openTime, data.closeTime);
+          }
+        })
+        .catch(() => {
+          // API 失敗時 fallback 正常營業
+          loadProducts();
+          generateTimeSlots("10:00", "19:30");
+        });
+    }
 
     function initializeLiff() {
       liff.init({ liffId: LIFF_ID })
@@ -359,11 +411,25 @@
       document.getElementById("submitBtn").disabled = !hasItems;
     }
 
-    function generateTimeSlots() {
+    function generateTimeSlots(openTime, closeTime) {
       var select = document.getElementById("pickupTime");
       var now = new Date();
-      for (var h = 10; h < 20; h++) {
+
+      var openParts = openTime.split(":");
+      var closeParts = closeTime.split(":");
+      var startH = parseInt(openParts[0]);
+      var startM = parseInt(openParts[1]);
+      var endH = parseInt(closeParts[0]);
+      var endM = parseInt(closeParts[1]);
+
+      for (var h = startH; h <= endH; h++) {
         [0, 30].forEach(function (m) {
+          // 跳過開始時間之前的時段
+          if (h === startH && m < startM) return;
+          // 跳過結束時間之後的時段
+          if (h === endH && m > endM) return;
+          if (h > endH) return;
+
           var slotTime = new Date();
           slotTime.setHours(h, m, 0, 0);
           if ((slotTime - now) / 1000 / 60 > 5) {
