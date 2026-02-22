@@ -297,8 +297,8 @@
 
   <div class="closed-overlay" id="closedOverlay">
     <div class="icon">🚫</div>
-    <h2>今日公休</h2>
-    <p id="closedReason">店家目前休息中</p>
+    <h2>目前無法接受線上訂單</h2>
+    <p id="closedReason"></p>
   </div>
 
   <script>
@@ -324,7 +324,7 @@
           if (!data.isOpen) {
             document.getElementById("initLoading").style.display = "none";
             document.getElementById("mainContent").style.display = "none";
-            document.getElementById("closedReason").innerText = data.reason || "店家目前休息中";
+            document.getElementById("closedReason").innerText = data.reason || "";
             document.getElementById("closedOverlay").style.display = "flex";
           } else {
             loadProducts();
@@ -419,14 +419,17 @@
       var closeParts = closeTime.split(":");
       var startH = parseInt(openParts[0]);
       var startM = parseInt(openParts[1]);
-      var endH = parseInt(closeParts[0]);
-      var endM = parseInt(closeParts[1]);
+
+      // 最晚可取餐時間 = 營業結束前 30 分鐘
+      var lastSlot = new Date();
+      lastSlot.setHours(parseInt(closeParts[0]), parseInt(closeParts[1]), 0, 0);
+      lastSlot.setMinutes(lastSlot.getMinutes() - 30);
+      var endH = lastSlot.getHours();
+      var endM = lastSlot.getMinutes();
 
       for (var h = startH; h <= endH; h++) {
         [0, 30].forEach(function (m) {
-          // 跳過開始時間之前的時段
           if (h === startH && m < startM) return;
-          // 跳過結束時間之後的時段
           if (h === endH && m > endM) return;
           if (h > endH) return;
 
