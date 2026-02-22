@@ -119,21 +119,57 @@
       list.innerHTML = html;
     }
 
-    function updateStatus(rowIndex, action) {
+    function updateStatus(rowIndex, action, orderId) {
+    // 先把按鈕變灰，給使用者反饋
+      var card = document.getElementById("card-" + rowIndex);
+      card.style.opacity = "0.5";
+    
       fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify({ action: "updateStatus", rowIndex: rowIndex, statusAction: action })
       })
-      .then(() => loadOrders());
+      .then(res => res.json())
+      .then(() => {
+        // 只更新這張卡片的狀態，不重新載入全部
+        var btn = card.querySelector(".btn-status[data-action='" + action + "']");
+        if (action === "已備餐") {
+          var isActive = btn.classList.contains("active-prepared");
+          btn.classList.toggle("active-prepared", !isActive);
+          btn.innerHTML = (!isActive ? "✅" : "☐") + " 已備餐";
+        } else if (action === "已取餐") {
+          var isActive = btn.classList.contains("active-picked");
+          btn.classList.toggle("active-picked", !isActive);
+          btn.innerHTML = (!isActive ? "✅" : "☐") + " 已取餐";
+        }
+        // 判斷是否兩個都勾了，變灰
+        var preparedDone = card.querySelector("[data-action='已備餐']").classList.contains("active-prepared");
+        var pickedDone = card.querySelector("[data-action='已取餐']").classList.contains("active-picked");
+        card.classList.toggle("done", preparedDone && pickedDone);
+        card.style.opacity = "1";
+      })
+      .catch(() => {
+        card.style.opacity = "1";
+        alert("更新失敗，請重試");
+      });
     }
 
     function archiveOrder(rowIndex) {
       if (!confirm("確定封存這筆訂單？")) return;
+      var card = document.getElementById("card-" + rowIndex);
+      card.style.opacity = "0.5";
+    
       fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify({ action: "updateStatus", rowIndex: rowIndex, statusAction: "封存" })
       })
-      .then(() => loadOrders());
+      .then(() => {
+        // 直接把卡片從畫面移除
+        card.remove();
+      })
+      .catch(() => {
+        card.style.opacity = "1";
+        alert("封存失敗，請重試");
+      });
     }
   </script>
 </body>
