@@ -722,8 +722,8 @@
             alert(result.message);
           } else {
             currentStoreOpen = result.isOpen;
-            updateToggleUI();
           }
+          updateToggleUI();
           btn.disabled = false;
         })
         .catch(() => {
