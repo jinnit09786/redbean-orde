@@ -105,10 +105,14 @@
             </div>
             <div class="order-id">${o.orderId}</div>
             <div class="btn-group-custom">
-              <button class="btn-status ${o.prepared ? 'active-prepared' : ''}" onclick="updateStatus(${o.rowIndex}, '已備餐')">
+              <button class="btn-status ${o.prepared ? 'active-prepared' : ''}" 
+                data-action="已備餐"
+                onclick="updateStatus(${o.rowIndex}, '已備餐', '${o.orderId}')">
                 ${o.prepared ? '✅' : '☐'} 已備餐
               </button>
-              <button class="btn-status ${o.picked ? 'active-picked' : ''}" onclick="updateStatus(${o.rowIndex}, '已取餐')">
+              <button class="btn-status ${o.picked ? 'active-picked' : ''}" 
+                data-action="已取餐"
+                onclick="updateStatus(${o.rowIndex}, '已取餐', '${o.orderId}')">
                 ${o.picked ? '✅' : '☐'} 已取餐
               </button>
               <button class="btn-archive" onclick="archiveOrder(${o.rowIndex})">封存</button>
