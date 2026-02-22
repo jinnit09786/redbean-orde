@@ -184,6 +184,157 @@
       font-size: 15px;
       display: none;
     }
+
+    /* 編輯按鈕 */
+    .edit-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+
+    .edit-btn:active {
+      background: #eee;
+    }
+
+    .order-card {
+      position: relative;
+    }
+
+    /* 編輯 Modal */
+    .edit-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .edit-overlay.active {
+      display: flex;
+    }
+
+    .edit-modal {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .edit-modal h3 {
+      color: #a71e32;
+      margin: 0 0 16px;
+      font-size: 20px;
+    }
+
+    .edit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .edit-item-name {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .edit-item-price {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .edit-qty {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .edit-qty-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #a71e32;
+      background: white;
+      color: #a71e32;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .edit-qty-btn:active {
+      background: #a71e32;
+      color: white;
+    }
+
+    .edit-qty-val {
+      font-size: 18px;
+      font-weight: bold;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .edit-field {
+      margin-top: 14px;
+    }
+
+    .edit-field label {
+      font-size: 15px;
+      font-weight: bold;
+      color: #555;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .edit-field input,
+    .edit-field select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1.5px solid #ddd;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .edit-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      background: #a71e32;
+      color: white;
+    }
+
+    .btn-cancel {
+      background: #eee;
+      color: #555;
+    }
   </style>
 </head>
 
@@ -207,9 +358,41 @@
     <div id="orderList"></div>
   </div>
 
+  <!-- 編輯 Modal -->
+  <div class="edit-overlay" id="editOverlay">
+    <div class="edit-modal">
+      <h3>✏️ 修改訂單</h3>
+      <div id="editOrderId" style="font-size:12px; color:#aaa; margin-bottom:12px;"></div>
+      <div id="editItems"></div>
+      <div class="edit-field">
+        <label>⏰ 取餐時間</label>
+        <select id="editPickupTime"></select>
+      </div>
+      <div class="edit-field">
+        <label>📝 備註</label>
+        <input type="text" id="editNote" maxlength="100" placeholder="備註...">
+      </div>
+      <div id="editTotal" style="font-size:18px; font-weight:bold; color:#a71e32; margin-top:14px;"></div>
+      <div class="edit-actions">
+        <button class="btn-cancel" onclick="closeEdit()">取消</button>
+        <button class="btn-save" onclick="saveEdit()">儲存修改</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxW0nFumExkb4rtue9nsucqtZIZDtXfYJliYEpjEKMNgvdMu6Em8S1xGKETYZxJHhDYKQ/exec";
     var currentPwd = "";
+    var editingOrder = null;
+    var editCart = {};
+    var allProducts = [];
+
+    // 載入品項列表（用於編輯）
+    function loadProducts() {
+      fetch(GAS_URL + "?action=getProducts")
+        .then(res => res.json())
+        .then(data => { allProducts = data.products || []; });
+    }
 
     function login() {
       var pwd = document.getElementById("pwdInput").value;
@@ -223,6 +406,7 @@
             document.getElementById("loginScreen").style.display = "none";
             document.getElementById("mainScreen").style.display = "block";
             renderOrders(data.orders);
+            loadProducts();
           }
         });
     }
@@ -276,6 +460,7 @@
 
         html += `
           <div class="order-card ${isDone ? 'done' : ''}" id="card-${o.rowIndex}">
+            <button class="edit-btn" onclick='openEdit(${JSON.stringify(o)})'>✏️</button>
             <div class="order-info">
               <span class="pickup-time">⏰ ${o.pickupTime}</span>
               <div>👤 ${o.userName}　📦 ${itemsHtml}</div>
@@ -348,6 +533,124 @@
         .catch(() => {
           card.style.opacity = "1";
           alert("封存失敗，請重試");
+        });
+    }
+
+    // ===== 編輯訂單功能 =====
+    function openEdit(order) {
+      editingOrder = order;
+      editCart = {};
+      // 從訂單的 items 初始化 editCart
+      if (order.items) {
+        order.items.forEach(function (item) {
+          editCart[item.name] = { qty: item.qty, price: item.price };
+        });
+      }
+      // 確保所有品項都在 editCart 裡（數量 0）
+      allProducts.forEach(function (p) {
+        if (!editCart[p.name]) {
+          editCart[p.name] = { qty: 0, price: p.price };
+        }
+      });
+
+      document.getElementById("editOrderId").innerText = order.orderId + " — " + order.userName;
+      document.getElementById("editNote").value = order.note || "";
+
+      // 取餐時間下拉
+      var sel = document.getElementById("editPickupTime");
+      sel.innerHTML = "";
+      var now = new Date();
+      for (var h = 10; h < 20; h++) {
+        [0, 30].forEach(function (m) {
+          var t = (h < 10 ? "0" + h : h) + ":" + (m === 0 ? "00" : "30");
+          var opt = document.createElement("option");
+          opt.value = t; opt.text = t;
+          if (t === order.pickupTime) opt.selected = true;
+          sel.add(opt);
+        });
+      }
+
+      renderEditItems();
+      document.getElementById("editOverlay").classList.add("active");
+    }
+
+    function renderEditItems() {
+      var html = "";
+      var total = 0;
+      var names = Object.keys(editCart);
+      names.forEach(function (name) {
+        var item = editCart[name];
+        total += item.qty * item.price;
+        html += `
+          <div class="edit-item">
+            <div>
+              <div class="edit-item-name">${name}</div>
+              <div class="edit-item-price">$${item.price}</div>
+            </div>
+            <div class="edit-qty">
+              <button class="edit-qty-btn" onclick="editQty('${name}', -1)">−</button>
+              <div class="edit-qty-val">${item.qty}</div>
+              <button class="edit-qty-btn" onclick="editQty('${name}', 1)">+</button>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById("editItems").innerHTML = html;
+      document.getElementById("editTotal").innerText = "💰 小計 $" + total;
+    }
+
+    function editQty(name, delta) {
+      var item = editCart[name];
+      var next = item.qty + delta;
+      if (next < 0) next = 0;
+      item.qty = next;
+      renderEditItems();
+    }
+
+    function closeEdit() {
+      document.getElementById("editOverlay").classList.remove("active");
+      editingOrder = null;
+    }
+
+    function saveEdit() {
+      var items = [];
+      Object.keys(editCart).forEach(function (name) {
+        if (editCart[name].qty > 0) {
+          items.push({ name: name, qty: editCart[name].qty, price: editCart[name].price });
+        }
+      });
+      if (items.length === 0) { alert("至少要有一項商品"); return; }
+
+      var payload = {
+        action: "updateOrder",
+        rowIndex: editingOrder.rowIndex,
+        items: items,
+        note: document.getElementById("editNote").value,
+        pickupTime: document.getElementById("editPickupTime").value
+      };
+
+      document.querySelector(".btn-save").disabled = true;
+      document.querySelector(".btn-save").innerText = "儲存中...";
+
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === "error") {
+            alert(result.message);
+          } else {
+            closeEdit();
+            loadOrders(); // 重新載入列表
+          }
+          document.querySelector(".btn-save").disabled = false;
+          document.querySelector(".btn-save").innerText = "儲存修改";
+        })
+        .catch(() => {
+          alert("修改失敗，請重試");
+          document.querySelector(".btn-save").disabled = false;
+          document.querySelector(".btn-save").innerText = "儲存修改";
         });
     }
   </script>
