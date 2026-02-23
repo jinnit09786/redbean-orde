@@ -453,10 +453,11 @@
         return;
       }
 
-      // 統計
+      // 統計（只統計「尚未備餐」的訂單）
+      var pendingOrders = orders.filter(function (o) { return !o.prepared; });
       var totalPrice = 0;
       var itemCounts = {}; // {"紅豆湯": 15, "綠豆湯": 3}
-      orders.forEach(function (o) {
+      pendingOrders.forEach(function (o) {
         totalPrice += (o.totalPrice || 0);
         if (o.items) {
           o.items.forEach(function (item) {
@@ -467,7 +468,8 @@
       var countParts = Object.keys(itemCounts).map(function (name) {
         return name + " " + itemCounts[name] + "份";
       });
-      summary.innerHTML = `共 <strong>${orders.length}</strong> 筆訂單　${countParts.join("・")}　💰 <strong>$${totalPrice}</strong>`;
+      var countStr = countParts.length > 0 ? countParts.join("・") + "　💰 <strong>$" + totalPrice + "</strong>" : "無";
+      summary.innerHTML = `待備餐 <strong>${pendingOrders.length}</strong> 筆　${countStr}`;
 
       var html = "";
       orders.forEach(function (o) {
@@ -519,20 +521,7 @@
       })
         .then(res => res.json())
         .then(() => {
-          var btn = card.querySelector(".btn-status[data-action='" + action + "']");
-          if (action === "已備餐") {
-            var isActive = btn.classList.contains("active-prepared");
-            btn.classList.toggle("active-prepared", !isActive);
-            btn.innerHTML = (!isActive ? "✅" : "☐") + " 已備餐";
-          } else if (action === "已取餐") {
-            var isActive = btn.classList.contains("active-picked");
-            btn.classList.toggle("active-picked", !isActive);
-            btn.innerHTML = (!isActive ? "✅" : "☐") + " 已取餐";
-          }
-          var preparedDone = card.querySelector("[data-action='已備餐']").classList.contains("active-prepared");
-          var pickedDone = card.querySelector("[data-action='已取餐']").classList.contains("active-picked");
-          card.classList.toggle("done", preparedDone && pickedDone);
-          card.style.opacity = "1";
+          loadOrders(); // 重新整理，更新統計列
         })
         .catch(() => {
           card.style.opacity = "1";
@@ -550,7 +539,7 @@
         body: JSON.stringify({ action: "updateStatus", rowIndex: rowIndex, statusAction: "封存" })
       })
         .then(() => {
-          card.remove();
+          loadOrders(); // 重新整理，更新統計列
         })
         .catch(() => {
           card.style.opacity = "1";
